@@ -1,0 +1,54 @@
+#!/bin/bash
+set -x
+cmd="$@"
+
+echo $cmd
+
+oc apply -f - <<EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gpu-job
+  labels:
+    kueue.x-k8s.io/queue-name: gpu-localqueue
+    test_name: kueue_test
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: nvidia.com/gpu.present
+                    operator: In
+                    values:
+                      - 'true'
+                  - key: nvidia.com/gpu.product
+                    operator: In
+                    values:
+                      - NVIDIA-A100-SXM4-40GB
+                      - Tesla-V100-PCIE-32GB
+              weight: 1
+      restartPolicy: Never
+      containers:
+        - name: gpu-job-$$
+          image: image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/minimal-gpu:2025.1
+          command: ["/bin/sh", "-c", "$cmd"]
+          resources:
+            requests:
+              nvidia.com/gpu: 1
+            limits:
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: ja-storage
+              mountPath: /opt/app-root/src
+      volumes:
+        - name: ja-storage
+          persistentVolumeClaim:
+            claimName: ja-storage
+
+
+EOF

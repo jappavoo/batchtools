@@ -1,0 +1,12 @@
+#!/bin/bash
+#set -x
+jobs=( $@ )
+
+(( ! ${#jobs[@]} )) && {
+   jobs=( $(oc get jobs -o name) )
+}
+
+for j in ${jobs[@]}; do 
+  j=${jobs##*/}
+  oc get pods -l job-name=$j -o name
+done

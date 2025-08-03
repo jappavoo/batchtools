@@ -1,0 +1,7 @@
+#!/bin/bash
+
+pods=( $(jpods $@) )
+
+for p in ${pods[@]}; do
+   oc logs $p
+done
