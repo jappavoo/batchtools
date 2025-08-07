@@ -17,21 +17,10 @@ spec:
   completions: 1
   template:
     spec:
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - preference:
-                matchExpressions:
-                  - key: nvidia.com/gpu.present
-                    operator: In
-                    values:
-                      - 'true'
-                  - key: nvidia.com/gpu.product
-                    operator: In
-                    values:
-                      - NVIDIA-A100-SXM4-40GB
-                      - Tesla-V100-PCIE-32GB
-              weight: 1
+      tolerations:
+      - key: "nvidia.com/gpu.product"
+        operator: "Exists"
+        effect: "NoSchedule"
       restartPolicy: Never
       containers:
         - name: gpu-job-$$
@@ -42,13 +31,4 @@ spec:
               nvidia.com/gpu: 1
             limits:
               nvidia.com/gpu: 1
-          volumeMounts:
-            - name: ja-storage
-              mountPath: /opt/app-root/src
-      volumes:
-        - name: ja-storage
-          persistentVolumeClaim:
-            claimName: ja-storage
-
-
 EOF
