@@ -1,0 +1,107 @@
+#!/bin/bash
+(( DEBUG ))  && set -x
+
+declare -i VERBOSE=${VERBOSE:-0}
+typeset -r -A QUEUES=( ['v100']='v100-localqueue'
+		       ['a100']='a100-localqueue'
+		       ['h100']='h100-localqueue' )
+typeset -r DEFAULT_GPU='v100'
+typeset -r GPU=${GPU:-"${DEFAULT_GPU}"}
+typeset -r JOBID=${JOBID:-$$}
+typeset -r JOB=${JOB:-"${GPU}-${JOBID}"}
+typeset -r CONTAINER="${JOB}-container"
+typeset -i -r MAX_SEC=${MAX_SEC:-$(( 60 * 15 ))}
+typeset -i -r JOB_DELETE=${JOB_DELETE:-1}
+typeset -i -r JOB_WAIT=${JOB_WAIT:-1}
+typeset -i -r JOB_WAIT_TMOUT=${JOB_WAIT_TMOUT:-$(( MAX_SEC * 4 ))}
+typeset OUT=/dev/null 
+
+(( VERBOSE )) && OUT=/dev/stderr
+
+[[ ! -v QUEUES[$GPU] ]] && {
+    echo "ERROR: unsupported GPU $GPU : no queue found" > /dev/stderr
+    exit -1
+}
+typeset QUEUE=${QUEUES[$GPU]}
+
+cmd="$@"
+
+[[ -z "$cmd" ]] && {
+    cat > /dev/stderr <<EOF
+USAGE: ${0##*/} <command line>
+  Runs the specified command on a GPU node
+  Supported GPU types are:  ${!QUEUES[@]}
+  Default GPU type is $DEFAULT_GPU
+  To overide default set GPU enviroment variable eg.
+     $ GPU=a100 ${0##*/} nvidia-smi
+EOF
+    exit 0
+}
+
+(( VERBOSE )) && {
+    echo GPU:${GPU} JOB:${JOB} CONTAINER:${CONTAINER} QUEUE:$QUEUE \
+	 MAX_SEC:${MAX_SEC} JOB_WAIT:${JOB_WAIT} JOB_DELETE:${JOB_DELETE} > /dev/stderr
+    echo "CMD: $cmd" > /dev/stderr
+}
+
+YAML=$(cat <<EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${JOB}
+  labels:
+    kueue.x-k8s.io/queue-name: ${QUEUE}
+    test_name: kueue_test
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    spec:
+      tolerations:
+      - key: "nvidia.com/gpu.product"
+        operator: "Equal"
+        value: "Tesla-V100-PCIE-32GB"
+        effect: "NoSchedule"
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - preference:
+                matchExpressions:
+                  - key: nvidia.com/gpu.product
+                    operator: In
+                    values:
+                      - Tesla-V100-PCIE-32GB
+              weight: 1
+      restartPolicy: Never
+      maximumExecutionTimeSeconds: ${MAX_SEC}
+      containers:
+        - name: ${CONTAINER}
+          image: image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/minimal-gpu:2025.1
+          command: ["/bin/sh", "-c", "$cmd"]
+          resources:
+            requests:
+              nvidia.com/gpu: 1
+            limits:
+              nvidia.com/gpu: 1
+EOF
+)
+
+(( VERBOSE )) && echo "$YAML"
+
+oc apply -f - >$OUT 2>&1 <<< "$YAML"
+
+(( ! JOB_WAIT )) &&  {
+    (( VERBOSE )) && {
+	echo "Job Created: $JOB" > $OUT
+	oc describe job $JOB > $OUT 2>&1
+    }
+    echo $JOB 
+}
+
+oc wait --for=condition=complete --timeout=${JOB_WAIT_TMOUT}s jobs/$JOB >$OUT 2>&1
+
+oc logs jobs/$JOB
+
+(( JOB_DELETE )) && { 
+    oc delete jobs/$JOB >$OUT 2>&1
+}

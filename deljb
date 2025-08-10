@@ -1,0 +1,11 @@
+#!/bin/bash
+
+typeset -a jobs=( $@ )
+
+(( ${#jobs[@]} == 0 )) && {
+    jobs=( $(oc get jobs -o name) )
+}
+
+for job in ${jobs[@]}; do
+   oc delete $job
+done
