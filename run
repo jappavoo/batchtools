@@ -4,7 +4,8 @@
 declare -i VERBOSE=${VERBOSE:-0}
 typeset -r -A QUEUES=( ['v100']='v100-localqueue'
 		       ['a100']='a100-localqueue'
-		       ['h100']='h100-localqueue' )
+		       ['h100']='h100-localqueue'
+		       ['none']='dummy-localqueue')
 typeset -r DEFAULT_GPU='v100'
 typeset -r GPU=${GPU:-"${DEFAULT_GPU}"}
 typeset -r JOBID=${JOBID:-$$}
@@ -15,6 +16,9 @@ typeset -i -r JOB_DELETE=${JOB_DELETE:-1}
 typeset -i -r JOB_WAIT=${JOB_WAIT:-1}
 typeset -i -r JOB_WAIT_TMOUT=${JOB_WAIT_TMOUT:-$(( MAX_SEC * 4 ))}
 typeset OUT=/dev/null 
+typeset -i GPU_NUMREQ=${GPU_NUMREQ:-1}
+typeset -i GPU_NUMLIM=${GPU_NUMREQ:-1}
+typeset RESOURCES=""
 
 (( VERBOSE )) && OUT=/dev/stderr
 
@@ -23,6 +27,26 @@ typeset OUT=/dev/null
     exit -1
 }
 typeset QUEUE=${QUEUES[$GPU]}
+
+if [[ "$GPU" == 'none' ]]; then
+    RESOURCES=\
+"          resources:
+            requests:
+              cpu: \"1\"
+              memory: \"1Gi\"
+            limits:
+              cpu: \"1\"
+              memory: \"1Gi\"
+"
+else
+    RESOURCES=\
+"          resources:
+            requests:
+              nvidia.com/gpu: ${GPU_NUMREQ}
+            limits:
+              nvidia.com/gpu: ${GPU_NUMLIM}
+"
+fi
 
 cmd="$@"
 
@@ -44,6 +68,7 @@ EOF
     echo "CMD: $cmd" > /dev/stderr
 }
 
+
 YAML=$(cat <<EOF
 apiVersion: batch/v1
 kind: Job
@@ -57,32 +82,13 @@ spec:
   completions: 1
   template:
     spec:
-      tolerations:
-      - key: "nvidia.com/gpu.product"
-        operator: "Equal"
-        value: "Tesla-V100-PCIE-32GB"
-        effect: "NoSchedule"
-      affinity:
-        nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - preference:
-                matchExpressions:
-                  - key: nvidia.com/gpu.product
-                    operator: In
-                    values:
-                      - Tesla-V100-PCIE-32GB
-              weight: 1
       restartPolicy: Never
       maximumExecutionTimeSeconds: ${MAX_SEC}
       containers:
         - name: ${CONTAINER}
           image: image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/minimal-gpu:2025.1
           command: ["/bin/sh", "-c", "$cmd"]
-          resources:
-            requests:
-              nvidia.com/gpu: 1
-            limits:
-              nvidia.com/gpu: 1
+${RESOURCES}
 EOF
 )
 
