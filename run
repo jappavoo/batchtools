@@ -19,6 +19,8 @@ typeset OUT=/dev/null
 typeset -i GPU_NUMREQ=${GPU_NUMREQ:-1}
 typeset -i GPU_NUMLIM=${GPU_NUMREQ:-1}
 typeset RESOURCES=""
+#typeset IMAGE=${IMAGE:-"image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/minimal-gpu:2025.1"}
+typeset IMAGE=${IMAGE:-"image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/csw-run-f25:latest"}
 
 (( VERBOSE )) && OUT=/dev/stderr
 
@@ -86,7 +88,7 @@ spec:
       maximumExecutionTimeSeconds: ${MAX_SEC}
       containers:
         - name: ${CONTAINER}
-          image: image-registry.openshift-image-registry.svc:5000/redhat-ods-applications/minimal-gpu:2025.1
+          image: ${IMAGE}
           command: ["/bin/sh", "-c", "$cmd"]
 ${RESOURCES}
 EOF
