@@ -1,5 +1,9 @@
 #!/bin/bash
 (( DEBUG ))  && set -x
+function nop()
+{
+    return -1
+}
 
 declare -i VERBOSE=${VERBOSE:-0}
 typeset -r -A QUEUES=( ['v100']='v100-localqueue'
@@ -36,6 +40,7 @@ typeset -i rc=0 complete_pid=0 failed_pid=0
 # default behavior relies on HOSTNAME set to pod name of where we are running (true on openshift RHOAI)
 typeset DEVPOD_NAME=${DEVPOD_NAME:-$HOSTNAME}
 typeset DEVCONTAINER=$(oc get pods/${DEVPOD_NAME} -o=jsonpath="{.spec.containers[0].name}")
+
 
 (( VERBOSE )) && OUT=/dev/stderr
 
@@ -169,6 +174,8 @@ oc apply -f - >$OUT 2>&1 <<< "$YAML"
     }
     echo $JOB 
 }
+
+trap nop SIGINT
 
 oc wait --for=condition=complete --timeout=${JOB_WAIT_TMOUT}s jobs/$JOB >$OUT 2>&1 & complete_pid=$!
 
