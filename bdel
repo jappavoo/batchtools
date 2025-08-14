@@ -2,9 +2,9 @@
 
 [[ $1 == '-h' ]] && {
     cat <<EOF
-  gel [jobname [jobname...]]
+  bdel [jobname [jobname...]]
   delete the specified jobs if none are specified the all current jobs
-  are deleted ;-)
+  are deleted ;-)  sEE repository README.md for more documeNtation and examples.
 EOF
  exit 0
 }

@@ -5,7 +5,7 @@ typeset GPUCNTCMP='>'
 
 [[ $1 == -h ]] && {
     cat <<EOF
-  gs [-h] [node-name [node-name ...]]
+  bps [-h] [node-name [node-name ...]]
      List any active GPU pods running on the cluster nodes (host computers).
      It can take time to check all nodes of the cluster (not all nodes have GPUs).
      If you know the node-name of the nodes that have GPUs that you want to 
@@ -16,7 +16,8 @@ typeset GPUCNTCMP='>'
         $ VERBOSE=1 gs 
      of
         $ VERBOSE=1 gs wrk-3
-     
+
+    See repository README.md for more documentation and examples.
 EOF
     exit 0
 }

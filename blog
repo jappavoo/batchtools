@@ -1,0 +1,17 @@
+#!/bin/bash
+
+[[ $1 == '-h' ]] && {
+    cat <<EOF
+  blog [pod-name [pod-name ...]]
+    display logs of specified pods.  If none specified then logs for all
+    pods of all current batch jobs will be display.
+    See repository README.md for more documentation and examples.
+EOF
+    exit 0
+}
+
+pods=( $(bpods $@) )
+
+for p in ${pods[@]}; do
+   oc logs $p
+done

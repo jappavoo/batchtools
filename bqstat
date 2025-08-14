@@ -3,10 +3,11 @@
 
 [[ $1 == "-h" ]] && {
     cat <<EOF  
-  gq [-h]
+  bqstat [-h]
      Prints that status of the gpu queues for the cluster. Let's you see the number of
      admitted (active), pending and reserved jobs on each queue. Additionally, it displays
-     how many gpus service the queue and the queueing strategy for the queue
+     how many gpus service the queue and the queueing strategy for the queue.
+    See repository README.md for more documentation and examples.
 EOF
     exit 0
 }

@@ -2,11 +2,11 @@
 
 [[ $1 == '-h' ]] && {
     cat <<EOF
-   gb
+   bjobs
      Display the status of your jobs.  This include all jobs that have not been deleted.
-     Note jobs must be explicitly deleted after they have completed.  'gun' deletes by
+     Note jobs must be explicitly deleted after they have completed.  'brun' deletes by
      default.  However, if you specified WAIT=0 to 'gun' then it will not delete the job
-     see 'gun -h'.
+     see 'brun -h' and repository README.md for more documentation and examples.
 EOF
     exit 0
 }

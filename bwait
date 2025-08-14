@@ -2,8 +2,9 @@
 
 [[ $1 == '-h' ]] && {
     cat <<EOF
-    gait <job-name> 
+    bwait <job-name> 
       wait for the specified job to finish (enter condition of complete or failed.
+    See repository README.md for more documentation and examples.	
 EOF
     exit 0
 }
