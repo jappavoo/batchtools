@@ -35,5 +35,5 @@ oc get clusterqueue -o json \
   ) as $gpuQuota |
 
   # now print your line
-  "\(.metadata.name)\t admitted: \(.status.admittedWorkloads // 0) pending: \(.status.pendingWorkloads // 0) reserved: \(.status.reservingWorkloads // 0) resources:\($gpuQuota) \(.spec.queueingStrategy)"
+  "\(.metadata.name)\t admitted: \(.status.admittedWorkloads // 0) pending: \(.status.pendingWorkloads // 0) reserved: \(.status.reservingWorkloads // 0) GPUS:\($gpuQuota) \(.spec.queueingStrategy)"
 '
