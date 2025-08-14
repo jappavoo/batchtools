@@ -1,0 +1,37 @@
+#!/bin/bash
+
+[[ $1 == '-h' ]] && {
+    cat <<EOF
+    gait <job-name> 
+      wait for the specified job to finish (enter condition of complete or failed.
+EOF
+    exit 0
+}
+typeset -r JOB=$1
+
+declare -i VERBOSE=${VERBOSE:-0}
+typeset -i -r MAX_SEC="${MAX_SEC:-$(( 60 * 15 ))}"
+typeset -i -r JOB_WAIT_TMOUT="${JOB_WAIT_TMOUT:-$(( MAX_SEC * 4 ))}"
+typeset OUT=/dev/null
+typeset -i -r JOB_DELETE="${JOB_DELETE:-1}"
+
+(( VERBOSE )) && OUT=/dev/stderr
+
+oc wait --for=condition=complete --timeout=${JOB_WAIT_TMOUT}s jobs/$JOB >$OUT 2>&1 & complete_pid=$!   
+oc wait --for=condition=failed --timeout=${JOB_WAIT_TMOUT}s jobs/$JOB >$OUT 2>&1 && exit -1 & failed_pid=$!
+    
+echo "Waiting $JOB for condition: complete or failed" > $OUT
+wait -n $complete_pid $failed_pid
+rc=$?
+    
+if ((  $rc == 0 )); then
+    echo "$JOB: Completed" >$OUT
+else
+    echo "*** ERROR: $JOB FAILED!!!! *****"
+fi
+    
+oc logs jobs/$JOB
+
+(( JOB_DELETE )) && { 
+    oc delete jobs/$JOB >$OUT 2>&1
+}
