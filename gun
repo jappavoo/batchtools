@@ -222,15 +222,15 @@ RUNDIR: jobs/job-v100-10006
 
 5. If you don't want to wait for the job to complete set WAIT=0.  Note when WAIT=1 the job will be deleted
    automatically for you by gun.  If you set WAIT=0 you will need manage the job.  Eg monitor it and once
-   you know it has finished delete.  See 'gobs' (list the status of your undeleted gpu jobs), 
+   you know it has finished delete.  See 'gb' (list the status of your current gpu jobs), 
    'gq' (inspect cluster wide gpu queues -- show their status),  'gs' (list all running gpu  pods on cluster nodes), 
    and 'gel' (delete a gpu job)
 
 $ WAIT=0 NAME=myasync-run0 gun "{ nvidia-smi; ./hello; sleep 15; }" 
-WARNING: Not waiting for myasync-run0-v100-14109 to finish you must manually delete with 'gobdel myasync-run0-v100-14109'
+WARNING: Not waiting for myasync-run0-v100-14109 to finish you must manually delete with 'gel myasync-run0-v100-14109'
 myasync-run0-v100-14109 jobs/myasync-run0-v100-14109
 
-$ gobs
+$ gb
 NAME                      STATUS    COMPLETIONS   DURATION   AGE
 myasync-run0-v100-14109   Running   0/1           4s         4s
 
@@ -243,7 +243,7 @@ v100-clusterqueue	 admitted: 1 pending: 0 reserved: 1 resources:3 BestEffortFIFO
 $ gs
 wrk-3: BUSY 1 ja-ope-test/myasync-run0-v100-14109-67k8c
 
-$ gobs
+$ gb
 NAME                      STATUS    COMPLETIONS   DURATION   AGE
 myasync-run0-v100-14109   Running   0/1           23s        23s
 
@@ -253,7 +253,7 @@ dummy-clusterqueue	 admitted: 0 pending: 0 reserved: 0 resources:0 BestEffortFIF
 h100-clusterqueue	 admitted: 0 pending: 0 reserved: 0 resources:0 BestEffortFIFO
 v100-clusterqueue	 admitted: 0 pending: 0 reserved: 0 resources:3 BestEffortFIFO
 
-$ gobs
+$ gb
 NAME                      STATUS     COMPLETIONS   DURATION   AGE
 myasync-run0-v100-14109   Complete   1/1           26s        32s
 
@@ -298,7 +298,7 @@ job.batch "myasync-run0-v100-14109" deleted
 
 6. Note the tool chain is available in the batch pod
 
-$  gun "make hello && ./hello | tee hello.log"
+$ gun "make hello && ./hello | tee hello.log"
 nvcc  hello.cu -o hello
 Hello from CPU
 Hello from GPU
@@ -314,7 +314,6 @@ Hello from GPU
 RUNDIR: jobs/job-v100-10422
 $
  
-
 See the top of this message for simple overview and the source for the details on how you can use gun ;-)
 EOF
     exit 0
@@ -478,7 +477,7 @@ if (( WAIT )); then
 	echo RUNDIR: ${OUTPUT_DIR#$(pwd)/} > /dev/stderr
     }
 else
-    echo "WARNING: Not waiting for $JOB to finish you must manually delete with 'gobdel $JOB'" > /dev/stderr
+    echo "WARNING: Not waiting for $JOB to finish you must manually delete with 'gel $JOB'" > /dev/stderr
     if (( CONTEXT )); then 
 	echo $JOB ${OUTPUT_DIR#$(pwd)/}
     else
