@@ -13,8 +13,9 @@ oc get pods --all-namespaces ${FIELDS[@]} -o json | jq -r '
   [ .items[]
     | . as $pod
     | .spec.containers[]? as $ctr
-    | select($ctr.resources.requests["nvidia.com/gpu"] != null)
+    | select( ($ctr.resources.requests["nvidia.com/gpu"]? | try tonumber catch 0) > 0)
     | { node: $pod.spec.nodeName,
+        pod: "\($pod.metadata.namespace)/\($pod.metadata.name)",
         gpus: ($ctr.resources.requests["nvidia.com/gpu"] | tonumber)
       }
   ]
@@ -23,13 +24,14 @@ oc get pods --all-namespaces ${FIELDS[@]} -o json | jq -r '
   # For each node‐group, sum the gpus
   | map({
       node:  .[0].node,
-      total: map(.gpus) | add
+      total: map(.gpus) | add,
+      pods: map(.pod) | unique
     })
   # And finally print “node: N GPUs”
   | map(
      select(.node != null)
      | if .total > 0
-        then "\(.node): BUSY \(.total) GPU POD"
+        then "\(.node): BUSY \(.total) ("+ (.pods | join(" ")) + ")"
 	else "\(.node): FREE"
 	end
     )
