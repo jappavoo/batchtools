@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pods=( $(jpods $@) )
+pods=( $(gpods $@) )
 
 for p in ${pods[@]}; do
    oc logs $p
