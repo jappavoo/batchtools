@@ -1,14 +1,21 @@
 #!/bin/bash
+typeset -i -r WATCH=${WATCH:-0}
 
 [[ $1 == '-h' ]] && {
     cat <<EOF
    bjobs
      Display the status of your jobs.  This include all jobs that have not been deleted.
      Note jobs must be explicitly deleted after they have completed.  'brun' deletes by
-     default.  However, if you specified WAIT=0 to 'gun' then it will not delete the job
+     default.  However, if you specified WAIT=0 to 'gun' then it will not delete the job.
+     Set WATCH=1 to have bjobs stay running and display changes in your jobs.
      see 'brun -h' and repository README.md for more documentation and examples.
+    
 EOF
     exit 0
 }
 
 oc get jobs
+
+(( WATCH )) && {
+    oc get -w jobs
+}
