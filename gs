@@ -1,0 +1,65 @@
+#!/bin/bash
+typeset -i -r VERBOSE=${VERBOSE:=0}
+typeset -a FIELDS=()
+typeset GPUCNTCMP='>'
+
+[[ $1 == -h ]] && {
+    cat <<EOF
+  gs [-h] [node-name [node-name ...]]
+     List any active GPU pods running on the cluster nodes (host computers).
+     It can take time to check all nodes of the cluster (not all nodes have GPUs).
+     If you know the node-name of the nodes that have GPUs that you want to 
+     check you can pass them  in as arguments, this considerably speeds up the operation.
+     By default if a node does not have a running pod that has requested a GPU nothing 
+     will be displayed for that node.  If you want to see information (eg. FREE) 
+     for the nodes then set VERBOSE=1 eg.
+        $ VERBOSE=1 gs 
+     of
+        $ VERBOSE=1 gs wrk-3
+     
+EOF
+    exit 0
+}
+
+for node in $@; do
+ FIELDS+=("--field-selector=spec.nodeName=$node")
+done	
+
+(( VERBOSE )) && {
+    GPUCNTCMP='>='
+}
+
+# the following jq was developed with the help of OpenAI o4-mini
+# be careful I am using double quotes to allow shell expansions to
+# customized the jq program (eg. CPUCNTCMP)
+
+oc get pods --all-namespaces --field-selector=status.phase=Running ${FIELDS[@]} -o json | jq -r "
+  # Build a flat list of {node, gpus} entries
+  [ .items[]
+    | . as \$pod
+    | select(\$pod.status.phase == \"Running\")
+    | .spec.containers[]? as \$ctr
+    | select( (\$ctr.resources.requests[\"nvidia.com/gpu\"]? | try tonumber catch 0) $GPUCNTCMP 0)
+    | { node: \$pod.spec.nodeName,
+        pod: \"\(\$pod.metadata.namespace)/\(\$pod.metadata.name)\",
+        gpus: (\$ctr.resources.requests[\"nvidia.com/gpu\"] | try tonumber catch 0)
+      }
+  ]
+  # Group those entries by node
+  | group_by(.node)
+  # For each node‐group, sum the gpus
+  | map({
+      node:  .[0].node,
+      total: map(.gpus) | add,
+      pods: map(.pod) | unique
+    })
+  # And finally print “node: N GPUs”
+  | map(
+     select(.node != null)
+     | if .total > 0
+        then \"\(.node): BUSY \(.total) \"+ (.pods | join(\" \"))
+	else \"\(.node): FREE\"
+	end
+    )
+  | .[]  
+"

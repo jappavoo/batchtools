@@ -1,5 +1,16 @@
 #!/bin/bash
 #set -x
+
+[[ $1 == '-h' ]] && {
+    cat <<EOF
+   gods [job-name [job-name ...]]
+      display the pods of the specified jobs if no job
+      is specified then the pods of all jobs will
+      be displayed.
+EOF
+    
+    exit 0
+}
 jobs=( $@ )
 
 (( ! ${#jobs[@]} )) && {

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+[[ $1 == '-h' ]] && {
+    cat <<EOF
+  gel [jobname [jobname...]]
+  delete the specified jobs if none are specified the all current jobs
+  are deleted ;-)
+EOF
+ exit 0
+}
+
+typeset -a jobs=( $@ )
+
+(( ${#jobs[@]} == 0 )) && {
+    jobs=( $(oc get jobs -o name) )
+}
+
+for job in ${jobs[@]}; do
+    [[ $job != */* ]] && {
+	job=jobs/$job
+    }
+   oc delete $job
+done

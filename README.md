@@ -1,3 +1,20 @@
-# How to run a batch job on the run container
+#  CUDA SUDA WUDA GPU batch job utilties
 
-`run "oc rsync csw-dev-0:$(pwd)/ .; ./hello > out.$$; oc rsync . csw-dev-0:$(pwd)/"`
+See help messages of the individual utilities
+
+## gun create and run a command line as a GPU batch job
+
+## gobs display the status of your current GPU batch jobs
+
+## gq display the status of the GPU batch queues
+
+
+## gs list GPU job pods cluster wide (all users) based on the node they are on
+
+## gel delete a GPU job
+
+
+## gods list pods of a GPU job
+
+## gait wait for a GPU job to finish
+NYI (wait for specified job to finish)

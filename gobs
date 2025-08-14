@@ -1,3 +1,14 @@
 #!/bin/bash
 
-exec oc get jobs
+[[ $1 == '-h' ]] && {
+    cat <<EOF
+   gobs 
+     Display the status of your jobs.  This include all jobs that have not been deleted.
+     Note jobs must be explicitly deleted after they have completed.  'gun' deletes by
+     default.  However, if you specified WAIT=0 to 'gun' then it will not delete the job
+     see 'gun -h'.
+EOF
+    exit 0
+}
+
+oc get jobs

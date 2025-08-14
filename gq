@@ -1,0 +1,38 @@
+#!/bin/bash
+
+
+[[ $1 == "-h" ]] && {
+    cat <<EOF  
+  gq [-h]
+     Prints that status of the gpu queues for the cluster. Let's you see the number of
+     admitted (active), pending and reserved jobs on each queue. Additionally, it displays
+     how many gpus service the queue and the queueing strategy for the queue
+EOF
+    exit 0
+}
+
+# my initial version
+#oc get clusterqueue -o json | \
+#jq -r '
+#.items[] |
+#"\(.metadata.name?)\tadmitted: \(.status.admittedWorkloads?) pending: \(.status.pendingWorkloads?) reserved: \(.status.reservingWorkloads?) resources:\(.spec.resourceGroups[].flavors[].resources[].nominalQuota) \(.spec.queueingStrategy) " '
+
+# refined with ChatGPT o4-mini
+oc get clusterqueue -o json \
+| jq -r '
+  .items[] |
+  # compute total GPU quota, defaulting to 0 if no nvidia.com/gpu entry
+  ( ( [ .spec.resourceGroups[]?  
+        | .flavors[]?  
+        | .resources[]?  
+        | select(.name == "nvidia.com/gpu")  
+        | (.nominalQuota? | tonumber? // 0)
+      ]
+      | add
+    ) // 0
+    | tostring
+  ) as $gpuQuota |
+
+  # now print your line
+  "\(.metadata.name)\t admitted: \(.status.admittedWorkloads // 0) pending: \(.status.pendingWorkloads // 0) reserved: \(.status.reservingWorkloads // 0) resources:\($gpuQuota) \(.spec.queueingStrategy)"
+'
