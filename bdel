@@ -4,7 +4,7 @@
     cat <<EOF
   bdel [jobname [jobname...]]
   delete the specified jobs if none are specified the all current jobs
-  are deleted ;-)  sEE repository README.md for more documeNtation and examples.
+  are deleted ;-)  See repository README.md for more documentation and examples.
 EOF
  exit 0
 }

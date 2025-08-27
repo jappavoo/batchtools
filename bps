@@ -13,9 +13,9 @@ typeset GPUCNTCMP='>'
      By default if a node does not have a running pod that has requested a GPU nothing 
      will be displayed for that node.  If you want to see information (eg. FREE) 
      for the nodes then set VERBOSE=1 eg.
-        $ VERBOSE=1 gs 
+        $ VERBOSE=1 bps 
      of
-        $ VERBOSE=1 gs wrk-3
+        $ VERBOSE=1 bps wrk-3
 
     See repository README.md for more documentation and examples.
 EOF
