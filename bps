@@ -27,7 +27,7 @@ function cmd()
   | map({
       node:  .[0].node,
       total: map(.gpus) | add,
-      pods: map(.pod) | unique
+      pods: map(select(.gpus > 0) | .pod) | unique
     })
   # And finally print “node: N GPUs”
   | map(
