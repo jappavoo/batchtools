@@ -229,6 +229,7 @@ if (( WAIT )); then
 	POD_INFO="$(oc describe $POD 2>&1)"
 	echo "*** ERROR: $JOB FAILED!!!! *****"
 	echo "$POD:"
+	grep -E 'State:|Reason:|Exit Code:|Started:|Finished:' <<<"$POD_INFO"
     fi
     
     oc logs jobs/$JOB
