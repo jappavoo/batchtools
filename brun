@@ -36,6 +36,7 @@ typeset CONTEXT_DIR="${CONTEXT_DIR:-$(pwd)}"
 typeset OUTPUT_DIR="${JOBS_DIR}/${JOB}"
 typeset -r GETLIST="${OUTPUT_DIR}/getlist"
 typeset -i rc=0 complete_pid=0 failed_pid=0
+typeset POD='' POD_INFO=''
 
 # default behavior relies on HOSTNAME set to pod name of where we are running (true on openshift RHOAI)
 typeset DEVPOD_NAME=${DEVPOD_NAME:-$HOSTNAME}
@@ -224,7 +225,10 @@ if (( WAIT )); then
     if ((  $rc == 0 )); then
 	echo "$JOB: Completed" >$OUT
     else
+	POD=$(oc get pods -l job-name=$JOB -o name)
+	POD_INFO="$(oc describe $POD 2>&1)"
 	echo "*** ERROR: $JOB FAILED!!!! *****"
+	echo "$POD:"
     fi
     
     oc logs jobs/$JOB
